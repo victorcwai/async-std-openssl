@@ -1,7 +1,7 @@
 //! Async TLS streams backed by OpenSSL.
 //!
 //! This crate provides a wrapper around the [`openssl`] crate's [`SslStream`](ssl::SslStream) type
-//! that works with with [`tokio`]'s [`AsyncRead`] and [`AsyncWrite`] traits rather than std's
+//! that works with with [`async-std`]'s [`AsyncRead`] and [`AsyncWrite`] traits rather than std's
 //! blocking [`Read`] and [`Write`] traits.
 #![warn(missing_docs)]
 
@@ -13,7 +13,7 @@ use std::io::{self, Read, Write};
 use std::pin::Pin;
 use std::slice;
 use std::task::{Context, Poll};
-use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
+use async_std::io::{Read as AsyncRead, Write as AsyncWrite};
 
 #[cfg(test)]
 mod test;
@@ -51,9 +51,9 @@ where
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let (stream, cx) = unsafe { self.parts() };
-        let mut buf = ReadBuf::new(buf);
-        match stream.poll_read(cx, &mut buf)? {
-            Poll::Ready(()) => Ok(buf.filled().len()),
+        // let mut buf = ReadBuf::new(buf);
+        match stream.poll_read(cx, buf)? {
+            Poll::Ready(num_bytes_read) => Ok(num_bytes_read),
             Poll::Pending => Err(io::Error::from(io::ErrorKind::WouldBlock)),
         }
     }
@@ -226,22 +226,24 @@ where
     fn poll_read(
         self: Pin<&mut Self>,
         ctx: &mut Context<'_>,
-        buf: &mut ReadBuf<'_>,
-    ) -> Poll<io::Result<()>> {
+        buf: &mut [u8],
+    ) -> Poll<io::Result<usize>> {
         self.with_context(ctx, |s| {
             // This isn't really "proper", but rust-openssl doesn't currently expose a suitable interface even though
             // OpenSSL itself doesn't require the buffer to be initialized. So this is good enough for now.
             let slice = unsafe {
-                let buf = buf.unfilled_mut();
+                // let buf = buf.unfilled_mut();
                 slice::from_raw_parts_mut(buf.as_mut_ptr().cast::<u8>(), buf.len())
             };
+
+            // Read into slice from OpenSSL
             match cvt(s.read(slice))? {
                 Poll::Ready(nread) => {
-                    unsafe {
-                        buf.assume_init(nread);
-                    }
-                    buf.advance(nread);
-                    Poll::Ready(Ok(()))
+                    // unsafe {
+                    //     buf.assume_init(nread);
+                    // }
+                    // buf.advance(nread);                    
+                    Poll::Ready(Ok(nread))
                 }
                 Poll::Pending => Poll::Pending,
             }
@@ -261,7 +263,7 @@ where
         self.with_context(ctx, |s| cvt(s.flush()))
     }
 
-    fn poll_shutdown(mut self: Pin<&mut Self>, ctx: &mut Context) -> Poll<io::Result<()>> {
+    fn poll_close(mut self: Pin<&mut Self>, ctx: &mut Context) -> Poll<io::Result<()>> {
         match self.as_mut().with_context(ctx, |s| s.shutdown()) {
             Ok(ShutdownResult::Sent) | Ok(ShutdownResult::Received) => {}
             Err(ref e) if e.code() == ErrorCode::ZERO_RETURN => {}
@@ -275,6 +277,6 @@ where
             }
         }
 
-        self.get_pin_mut().poll_shutdown(ctx)
+        self.get_pin_mut().poll_close(ctx)
     }
 }
