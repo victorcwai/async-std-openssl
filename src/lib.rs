@@ -5,6 +5,7 @@
 //! blocking [`Read`] and [`Write`] traits.
 #![warn(missing_docs)]
 
+use async_std::io::{Read as AsyncRead, Write as AsyncWrite};
 use futures_util::future;
 use openssl::error::ErrorStack;
 use openssl::ssl::{self, ErrorCode, ShutdownResult, Ssl, SslRef};
@@ -13,7 +14,6 @@ use std::io::{self, Read, Write};
 use std::pin::Pin;
 use std::slice;
 use std::task::{Context, Poll};
-use async_std::io::{Read as AsyncRead, Write as AsyncWrite};
 
 #[cfg(test)]
 mod test;
@@ -242,7 +242,7 @@ where
                     // unsafe {
                     //     buf.assume_init(nread);
                     // }
-                    // buf.advance(nread);                    
+                    // buf.advance(nread);
                     Poll::Ready(Ok(nread))
                 }
                 Poll::Pending => Poll::Pending,

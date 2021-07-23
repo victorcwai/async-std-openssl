@@ -1,11 +1,11 @@
 use crate::SslStream;
+use async_std::io::prelude::{ReadExt, WriteExt};
+use async_std::io::Write;
+use async_std::net::{TcpListener, TcpStream};
 use futures_util::future;
 use openssl::ssl::{Ssl, SslAcceptor, SslConnector, SslFiletype, SslMethod};
 use std::net::ToSocketAddrs;
 use std::pin::Pin;
-use async_std::io::Write;
-use async_std::io::prelude::{WriteExt, ReadExt};
-use async_std::net::{TcpListener, TcpStream};
 
 #[async_std::test]
 async fn google() {
