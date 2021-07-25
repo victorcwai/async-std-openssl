@@ -12,7 +12,7 @@ use openssl::ssl::{self, ErrorCode, ShutdownResult, Ssl, SslRef};
 use std::fmt;
 use std::io::{self, Read, Write};
 use std::pin::Pin;
-use std::slice;
+// use std::slice;
 use std::task::{Context, Poll};
 
 #[cfg(test)]
@@ -231,13 +231,13 @@ where
         self.with_context(ctx, |s| {
             // This isn't really "proper", but rust-openssl doesn't currently expose a suitable interface even though
             // OpenSSL itself doesn't require the buffer to be initialized. So this is good enough for now.
-            let slice = unsafe {
-                // let buf = buf.unfilled_mut();
-                slice::from_raw_parts_mut(buf.as_mut_ptr().cast::<u8>(), buf.len())
-            };
+            // let slice = unsafe {
+            // let buf = buf.unfilled_mut();
+            // slice::from_raw_parts_mut(buf.as_mut_ptr().cast::<u8>(), buf.len())
+            // };
 
             // Read into slice from OpenSSL
-            match cvt(s.read(slice))? {
+            match cvt(s.read(buf))? {
                 Poll::Ready(nread) => {
                     // unsafe {
                     //     buf.assume_init(nread);
