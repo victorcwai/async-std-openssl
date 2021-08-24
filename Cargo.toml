@@ -14,6 +14,7 @@ futures-util = { version = "0.3", default-features = false }
 openssl = "0.10.32"
 openssl-sys = "0.9"
 async-std = "1.9.0"
+async-dup = "1.2"
 
 [dev-dependencies]
 async-std = { version = "1.9.0", features = ["attributes"] }

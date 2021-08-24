@@ -15,6 +15,9 @@ use std::pin::Pin;
 // use std::slice;
 use std::task::{Context, Poll};
 
+pub mod tls_stream_wrapper;
+pub use crate::tls_stream_wrapper::SslStreamWrapper;
+
 #[cfg(test)]
 mod test;
 
