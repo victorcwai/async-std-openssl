@@ -1,3 +1,5 @@
+//! Stream Wrappers for SSL to extend support for some consuming Library use cases.
+
 use async_dup::{Arc, Mutex};
 use async_std::io::{Read, Result, Write};
 use async_std::net::TcpStream;
@@ -9,11 +11,16 @@ use crate::SslStream;
 // Ref: https://stackoverflow.com/questions/61643574/how-can-i-clone-an-opensslsslsslstream
 // "SSL / TLS logic contains state. All the clones need to agree on and update that state.
 // You will need to wrap it in an Arc<Mutex<_>> or equivalent and clone that."
+
+/// A wrapper for an SslStream that allows cloning and sending between multiple tasks/threads.
+/// In most cases you will not need this, but some consumers (such as tide listeners) rely
+/// on this behaviour.
 #[derive(Clone)]
 pub struct SslStreamWrapper(Arc<Mutex<SslStream<TcpStream>>>);
 
 impl SslStreamWrapper {
-    pub(crate) fn new(stream: SslStream<TcpStream>) -> Self {
+    /// Wrap an SslStream in a clonable wrapper.
+    pub fn new(stream: SslStream<TcpStream>) -> Self {
         Self(Arc::new(Mutex::new(stream)))
     }
 }
