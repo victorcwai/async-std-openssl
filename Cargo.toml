@@ -1,6 +1,6 @@
 [package]
 name = "async-std-openssl"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["victorcwai <victorcwai@gmail.com>"]
 license = "MIT/Apache-2.0"
 edition = "2018"
